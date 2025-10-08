@@ -2,6 +2,7 @@ SCREEN_WIDTH = 600
 SCREEN_HEIGHT = 850
 PLAYER_HP = 500
 PLAYER_MODIFICATOR = 15
+POINTS_PER_SECOND = 10
 
 PLAYER_BULLET_LST = ['laser_player1', 'laser_player2', 'laser_player3', 'laser_player6', 'laser_player8',
                      'laser_player9', 'laser_player10', 'laser_player11', 'laser_player12', 'laser_player13']

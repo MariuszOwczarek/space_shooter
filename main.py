@@ -121,7 +121,7 @@ class Game:
         self.screen.blit(game_over_text, (settings.SCREEN_WIDTH // 2 - game_over_text.get_width() // 2,
                                         settings.SCREEN_HEIGHT // 2 - game_over_text.get_height() // 2))
 
-        score_text = game_over_font.render(f"Score: {self.game_points}", True, pygame.Color('white'))
+        score_text = game_over_font.render(f"Score: {int(self.game_points)}", True, pygame.Color('white'))
         self.screen.blit(score_text, (settings.SCREEN_WIDTH // 2 - score_text.get_width() // 2,
                                     settings.SCREEN_HEIGHT // 2 + score_text.get_height()))
 
@@ -174,16 +174,13 @@ class Game:
         energy_image_ratio = self.energy_image.get_width() * ratio
         energy_text = self.FONT_super_small.render(f'{player.hp}', True, 'White')
 
-        if energy_image_ratio <= 0:
-            energy_image_scaled = pygame.transform.scale(self.energy_image, (0, self.energy_image.get_height()))
-        else:
-            energy_image_scaled = pygame.transform.scale(self.energy_image,
-                                                        (energy_image_ratio, self.energy_image.get_height()))
+        energy_image_scaled = pygame.transform.scale(self.energy_image,
+                                                     (max(0, energy_image_ratio), self.energy_image.get_height()))
 
         weapon_image = self.weapon_images[bullet_type]
         weapon_qty_text = self.FONT_small.render(f'{settings.BULLET_DATA[bullet_type]["qty"]}', True, 'White')
         level_text = self.FONT_small.render(f'Lvl: {game.game_level}', True, 'White')
-        points_text = self.FONT_small.render(f'{game.game_points}', True, 'White')
+        points_text = self.FONT_small.render(f'{int(self.game_points)}', True, 'White')
 
         if self.game_points >= int((5_000 * self.game_level) / 3):
             buy_bullets_text = self.FONT_super_small.render(f'(P)', True, 'White')
@@ -250,6 +247,7 @@ class Game:
 
         while run:
             dt = clock.tick(60) / 1000  # Limit the frame rate to 60 FPS
+            self.game_points += settings.POINTS_PER_SECOND * dt
             weapon_no = settings.PLAYER_BULLET_LST[select_weapon]
             keys = pygame.key.get_pressed()
 
@@ -299,7 +297,6 @@ class Game:
                         self.alien_shot_sound.play()
                 if alien.rect.top > settings.SCREEN_HEIGHT:
                     alien.kill()
-                    self.game_points -= 2000
 
             # Alien bullet and player collision (bullet to player ship)
             for bullet in alien_bullet_group:
@@ -359,7 +356,7 @@ class Game:
                     if self.sound_enabled:
                         self.explosion_sound.play()
 
-            if player.hp <= 0 or game.game_points < 0:
+            if player.hp <= 0:
                 if not self.game_over:
                     self.game_over_screen()
                     self.game_over = True  # Set game_over flag to True after displaying the game over screen
