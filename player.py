@@ -4,13 +4,12 @@ import settings
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, groups):
+    def __init__(self, groups, assets):
         # noinspection PyTypeChecker
         super().__init__(groups)
         self.hp = settings.PLAYER_HP
         self.modificator = settings.PLAYER_MODIFICATOR
-        self.image_big = pygame.image.load('./Graphics/player/ship2.png').convert_alpha()
-        self.image = pygame.transform.scale_by(self.image_big, 0.5)
+        self.image = pygame.transform.scale_by(assets.player_ship, 0.5)
         self.rect = self.image.get_rect(midbottom=(settings.SCREEN_WIDTH / 2, settings.SCREEN_HEIGHT))
 
         # float based position
