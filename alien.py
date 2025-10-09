@@ -9,6 +9,8 @@ class Alien(pygame.sprite.Sprite):
         self.damage = settings.ALIEN_DATA[alien_type]["damage"]
         self.hp = settings.ALIEN_DATA[alien_type]["hp"]
         self.defence = settings.ALIEN_DATA[alien_type]["defence"]
+        self.max_hp = self.hp
+        self.max_defence = self.defence
         image_big = assets.aliens[self.alien_type]
         self.image = pygame.transform.scale_by(image_big, 0.5)
         self.rect = self.image.get_rect(topleft=(pos_x, pos_y))
