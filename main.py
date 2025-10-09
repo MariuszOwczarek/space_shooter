@@ -212,7 +212,8 @@ class Game:
                         resize=0.6,
                         groups=player_bullet_group,
                         assets=self.assets)
-                    settings.BULLET_DATA[weapon_no]["qty"] -= 1
+                    if weapon_no != settings.PLAYER_BULLET_LST[0]:
+                        settings.BULLET_DATA[weapon_no]["qty"] -= 1
                     if self.assets.sound_enabled:
                         self.assets.player_shot_sound.play()
 
