@@ -144,7 +144,6 @@ class Game:
         with open("leaderboard.txt", "w") as file:
             for score, date in self.leaderboard_data:
                 file.write(f"{score} ({date})\n")
-
     def buy_powerups(self, player, power_type, cost):
         self.cost = cost
         if power_type == 'bullets' and self.game_points >= self.cost:
@@ -354,6 +353,22 @@ class Game:
             alien_group.draw(self.screen)
             powerup_group.draw(self.screen)
             shottext_group.draw(self.screen)
+
+            # Draw alien health/defense bars
+            for alien in alien_group:
+                # Health bar
+                health_ratio = alien.hp / alien.max_hp
+                health_bar_width = alien.rect.width * health_ratio
+                health_bar_rect = pygame.Rect(alien.rect.left, alien.rect.top - 10, health_bar_width, 4)
+                pygame.draw.rect(self.screen, 'green', health_bar_rect)
+                pygame.draw.rect(self.screen, 'darkgreen', (alien.rect.left, alien.rect.top - 10, alien.rect.width, 4), 1)
+
+                # Defense bar
+                defense_ratio = alien.defence / alien.max_defence
+                defense_bar_width = alien.rect.width * defense_ratio
+                defense_bar_rect = pygame.Rect(alien.rect.left, alien.rect.top - 5, defense_bar_width, 4)
+                pygame.draw.rect(self.screen, 'lightblue', defense_bar_rect)
+                pygame.draw.rect(self.screen, 'darkblue', (alien.rect.left, alien.rect.top - 5, alien.rect.width, 4), 1)
 
             # Draw HUD after drawing sprites
             self.hud.draw(self.screen, player, self.game_level, self.game_points, weapon_no)
