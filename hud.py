@@ -23,7 +23,10 @@ class HUD:
 
         # Weapon Info
         weapon_image = self.weapon_images[bullet_type]
-        weapon_qty_text = self.font_small.render(f'{settings.BULLET_DATA[bullet_type]["qty"]}', True, 'White')
+        if bullet_type == settings.PLAYER_BULLET_LST[0]:
+            weapon_qty_text = self.font_small.render('INF', True, 'White')
+        else:
+            weapon_qty_text = self.font_small.render(f'{settings.BULLET_DATA[bullet_type]["qty"]}', True, 'White')
 
         # Game Info
         level_text = self.font_small.render(f'Lvl: {game_level}', True, 'White')
