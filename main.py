@@ -8,25 +8,21 @@ from bullet import Bullet
 from alien import Alien
 from powerups import Powerups
 from hit import HitText
+from hud import HUD
+from assets import Assets
 
 
 class Game:
     def __init__(self):
         pygame.init()
-        self.sound_enabled = True
-        try:
-            pygame.mixer.init()
-        except pygame.error:
-            self.sound_enabled = False
-            print("Warning: Audio device not found. Running without sound.")
         pygame.font.init()
         pygame.display.set_caption('Space Rage')
         pygame.mouse.set_visible(False)
         self.screen = pygame.display.set_mode((settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
-        BG = pygame.image.load('./Graphics/background/bg12.jpeg').convert()
-        self.BG_FIT = pygame.transform.scale(BG, (settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
-        self.FONT_small = pygame.font.SysFont('helvetica', 20)
-        self.FONT_super_small = pygame.font.SysFont('helvetica', 15)
+
+        self.assets = Assets()
+
+        self.BG_FIT = pygame.transform.scale(self.assets.background, (settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT))
         self.game_points = 0
         self.game_level = 1
         self.ratio = 1
@@ -34,8 +30,7 @@ class Game:
         self.game_over = False
 
         # Load and play background music
-        if self.sound_enabled:
-            pygame.mixer.music.load('./Music/mixkit-space-deploy-whizz-3003.wav')
+        if self.assets.sound_enabled:
             pygame.mixer.music.set_volume(0.3)  # Set music volume (30%)
             pygame.mixer.music.play(-1)  # Play the music in an infinite loop
 
@@ -59,27 +54,7 @@ class Game:
         except FileNotFoundError:
             self.leaderboard_data = []
 
-        # Load images for HUD
-        self.bar_empty_image = pygame.image.load('./Graphics/other/hp_bar_bg.png').convert_alpha()
-        self.energy_image = pygame.image.load('./Graphics/other/hp_bar.png').convert_alpha()
-        self.additional_bullets_image = pygame.transform.scale_by(
-            pygame.image.load('./Graphics/powerups/bullets.png').convert_alpha(), 0.5)
-        self.additional_energy_image = pygame.transform.scale_by(
-            pygame.image.load('./Graphics/powerups/energy.png').convert_alpha(), 0.5)
-        self.weapon_images = {
-            bullet_type: pygame.image.load(
-                f'./Graphics/weapons/{data["image"]}.png').convert_alpha()
-            for bullet_type, data in settings.BULLET_DATA.items()
-        }
-
-        # Load sounds
-        if self.sound_enabled:
-            self.player_shot_sound = pygame.mixer.Sound('./Music/sfx_laser1.ogg')
-            self.alien_shot_sound = pygame.mixer.Sound('./Music/mixkit-short-laser-gun-shot-1670.wav')
-            self.explosion_sound = pygame.mixer.Sound('./Music/mixkit-falling-hit-757.wav')
-            self.powerup_sound = pygame.mixer.Sound('./Music/mixkit-space-coin-win-notification-271.wav')
-            self.game_over_sound = pygame.mixer.Sound('./Music/sfx_lose.ogg')
-            self.player_hit_sound = pygame.mixer.Sound('./Music/sfx_shieldDown.ogg')
+        self.hud = HUD(self.assets)
 
 
     def intro_screen(self):
@@ -170,38 +145,6 @@ class Game:
             for score, date in self.leaderboard_data:
                 file.write(f"{score} ({date})\n")
 
-    def menu_hud(self, player, ratio, bullet_type):
-        energy_image_ratio = self.energy_image.get_width() * ratio
-        energy_text = self.FONT_super_small.render(f'{player.hp}', True, 'White')
-
-        energy_image_scaled = pygame.transform.scale(self.energy_image,
-                                                     (max(0, energy_image_ratio), self.energy_image.get_height()))
-
-        weapon_image = self.weapon_images[bullet_type]
-        weapon_qty_text = self.FONT_small.render(f'{settings.BULLET_DATA[bullet_type]["qty"]}', True, 'White')
-        level_text = self.FONT_small.render(f'Lvl: {game.game_level}', True, 'White')
-        points_text = self.FONT_small.render(f'{int(self.game_points)}', True, 'White')
-
-        if self.game_points >= int((5_000 * self.game_level) / 3):
-            buy_bullets_text = self.FONT_super_small.render(f'(P)', True, 'White')
-            game.screen.blit(buy_bullets_text, (settings.SCREEN_WIDTH - buy_bullets_text.get_width() - 20, 70))
-            game.screen.blit(self.additional_bullets_image, (settings.SCREEN_WIDTH - 60, 68))
-
-        if self.game_points >= int((10_000 * self.game_level) / 3) and player.hp != settings.PLAYER_HP:
-            buy_energy_text = self.FONT_super_small.render(f'(O)', True, 'White')
-            game.screen.blit(buy_energy_text, (settings.SCREEN_WIDTH - buy_energy_text.get_width() - 20, 90))
-            game.screen.blit(self.additional_energy_image, (settings.SCREEN_WIDTH - 60, 88))
-
-        game.screen.blit(points_text, (settings.SCREEN_WIDTH - points_text.get_width() - 20, 50))
-        game.screen.blit(level_text, (settings.SCREEN_WIDTH - level_text.get_width() - 20, 17))
-        game.screen.blit(weapon_qty_text, (50, 57))
-        game.screen.blit(self.bar_empty_image, (5, 10))
-        game.screen.blit(energy_image_scaled, (14, 17))
-        game.screen.blit(weapon_image, (8, 50))
-        game.screen.blit(energy_text, (68, 19))
-
-        pygame.display.update()
-
     def buy_powerups(self, player, power_type, cost):
         self.cost = cost
         if power_type == 'bullets' and self.game_points >= self.cost:
@@ -227,7 +170,7 @@ class Game:
         shottext_group = pygame.sprite.Group()
 
         # noinspection PyTypeChecker
-        player = Player(player_group)
+        player = Player(player_group, self.assets)
         run = True
         select_weapon = 0
         clock = pygame.time.Clock()
@@ -259,7 +202,8 @@ class Game:
                     Alien(pos_x=random.randint(10, settings.SCREEN_WIDTH - 90),
                         pos_y=random.randint(-300, -200),
                         alien_type=random.choice(settings.ALIEN_LST),
-                        group=alien_group)
+                        group=alien_group,
+                        assets=self.assets)
 
                 if event.type == bullet_respawn and keys[pygame.K_SPACE] and \
                         settings.BULLET_DATA[weapon_no]["qty"] > 0:
@@ -267,10 +211,11 @@ class Game:
                         direction=-1,
                         bullet_type=weapon_no,
                         resize=0.6,
-                        groups=player_bullet_group)
+                        groups=player_bullet_group,
+                        assets=self.assets)
                     settings.BULLET_DATA[weapon_no]["qty"] -= 1
-                    if self.sound_enabled:
-                        self.player_shot_sound.play()
+                    if self.assets.sound_enabled:
+                        self.assets.player_shot_sound.play()
 
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_p:
@@ -292,9 +237,10 @@ class Game:
                         direction=1,
                         bullet_type=laser_check,
                         resize=0.5,
-                        groups=alien_bullet_group)
-                    if self.sound_enabled:
-                        self.alien_shot_sound.play()
+                        groups=alien_bullet_group,
+                        assets=self.assets)
+                    if self.assets.sound_enabled:
+                        self.assets.alien_shot_sound.play()
                 if alien.rect.top > settings.SCREEN_HEIGHT:
                     alien.kill()
 
@@ -309,8 +255,8 @@ class Game:
                             direction=1,
                             groups=shottext_group)
                     self.ratio = player.hp / settings.PLAYER_HP
-                    if self.sound_enabled:
-                        self.player_hit_sound.play()
+                    if self.assets.sound_enabled:
+                        self.assets.player_hit_sound.play()
                 if bullet.rect.y > settings.SCREEN_HEIGHT:
                     bullet.kill()
 
@@ -331,8 +277,8 @@ class Game:
                         bullet.kill()
                         if alien.hp <= 0:
                             alien.kill()
-                            if self.sound_enabled:
-                                self.explosion_sound.play()
+                            if self.assets.sound_enabled:
+                                self.assets.explosion_sound.play()
                             # If alien killed, choose powerup
                             self.game_points += settings.ALIEN_DATA[alien.alien_type]["points"]
                             lucky_num = random.randint(1, 101)
@@ -341,7 +287,8 @@ class Game:
                                 Powerups(pos_x=random.randint(10, settings.SCREEN_WIDTH - 80),
                                         pos_y=random.randint(-100, -50),
                                         power_type=powerup_lst,
-                                        groups=powerup_group)
+                                        groups=powerup_group,
+                                        assets=self.assets)
 
                 if bullet.rect.y < 0:
                     bullet.kill()
@@ -353,23 +300,23 @@ class Game:
                     player.kill()
                     player.hp = 0
                     self.ratio = player.hp / settings.PLAYER_HP
-                    if self.sound_enabled:
-                        self.explosion_sound.play()
+                    if self.assets.sound_enabled:
+                        self.assets.explosion_sound.play()
 
             if player.hp <= 0:
                 if not self.game_over:
                     self.game_over_screen()
                     self.game_over = True  # Set game_over flag to True after displaying the game over screen
-                    if self.sound_enabled:
-                        self.game_over_sound.play()
+                    if self.assets.sound_enabled:
+                        self.assets.game_over_sound.play()
 
 
             # Powerups and player collision (adding items based on power-up)
             for powerup in powerup_group:
                 if powerup.rect.colliderect(player.rect):
                     powerup.kill()
-                    if self.sound_enabled:
-                        self.powerup_sound.play()
+                    if self.assets.sound_enabled:
+                        self.assets.powerup_sound.play()
                     if powerup.power_type == 'power':
                         self.game_points += settings.POWERUP_DATA[powerup.power_type]["points"]
                     if powerup.power_type == 'energy':
@@ -409,7 +356,7 @@ class Game:
             shottext_group.draw(self.screen)
 
             # Draw HUD after drawing sprites
-            self.menu_hud(player, self.ratio, weapon_no)
+            self.hud.draw(self.screen, player, self.game_level, self.game_points, weapon_no)
 
             pygame.display.update()
 
