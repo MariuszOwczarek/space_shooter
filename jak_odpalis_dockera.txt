@@ -1,0 +1,10 @@
+# zbduj obraz
+docker build -t space_shooter_vnc:fixes .
+
+# uruchom kontener
+docker run --name space_vnc_test -it --rm -p 6901:6901 -p 5901:5901 \
+  -e SDL_AUDIODRIVER=dummy \
+  space_shooter_vnc:fixes
+
+# odpal gre na stronie:
+http://localhost:6901/vnc.html
